@@ -20,14 +20,14 @@ This is a local bridge service that enables n8n to communicate with the Browser 
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/yourusername/browser-n8n-local.git
+   git clone https://github.com/draphonix/browser-n8n-local.git
    cd browser-n8n-local
    ```
 
 2. Create a virtual environment (recommended):
    ```bash
    python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   . venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
 3. Install the required dependencies:
