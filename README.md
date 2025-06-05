@@ -1,5 +1,7 @@
 # Browser Use Local Bridge for n8n
 
+⚠️ This is just a fork of the original project. In my tests, I couldn't get it to work due to an update in the browser-use module. This fork aims to fix that error for personal use. It can also be installed via Docker: <https://hub.docker.com/r/gabrielsofto/browser-n8n-bridge>
+
 This is a local bridge service that enables n8n to communicate with the Browser Use Python library. It mimics the Browser Use Cloud API endpoints but runs locally, allowing you to execute browser automation tasks without relying on the cloud service.
 
 ## Features
@@ -19,38 +21,44 @@ This is a local bridge service that enables n8n to communicate with the Browser 
 ## Installation
 
 1. Clone this repository:
+
    ```bash
    git clone https://github.com/draphonix/browser-n8n-local.git
    cd browser-n8n-local
    ```
 
 2. Create a virtual environment (recommended):
+
    ```bash
    python -m venv venv
    . venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
 3. Install the required dependencies:
+
    ```bash
    pip install -r requirements.txt
    ```
 
 4. Set up environment variables:
+
    ```bash
    cp .env-example .env
    ```
+
    Then edit the `.env` file to add your OpenAI and/or Anthropic API keys.
 
 ## Running the Service
 
 1. Start the FastAPI server:
+
    ```bash
    python app.py
    ```
 
-2. The server will start at http://localhost:8000 by default.
+2. The server will start at <http://localhost:8000> by default.
 
-3. You can access the API documentation at http://localhost:8000/docs
+3. You can access the API documentation at <http://localhost:8000/docs>
 
 ## API Endpoints
 

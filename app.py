@@ -63,6 +63,7 @@ class EnumJSONEncoder(json.JSONEncoder):
             return obj.value
         return super().default(obj)
 
+
 # Configure FastAPI to use custom JSON serialization for responses
 
 
@@ -71,7 +72,9 @@ async def add_json_serialization(request: Request, call_next):
     response = await call_next(request)
 
     # Only attempt to modify JSON responses and check if body() method exists
-    if response.headers.get("content-type") == "application/json" and hasattr(response, "body"):
+    if response.headers.get("content-type") == "application/json" and hasattr(
+        response, "body"
+    ):
         try:
             content = await response.body()
             content_str = content.decode("utf-8")
@@ -82,12 +85,13 @@ async def add_json_serialization(request: Request, call_next):
                 content=content_str,
                 status_code=response.status_code,
                 headers=dict(response.headers),
-                media_type="application/json"
+                media_type="application/json",
             )
         except Exception as e:
             logger.error(f"Error serializing JSON response: {str(e)}")
 
     return response
+
 
 # Enable CORS
 app.add_middleware(
@@ -125,30 +129,35 @@ class TaskStatusResponse(BaseModel):
     result: Optional[str] = None
     error: Optional[str] = None
 
+
 # Utility functions
 
 
 def get_llm(ai_provider: str):
     """Get LLM based on provider"""
     if ai_provider == "anthropic":
-        return ChatAnthropic(model=os.environ.get("ANTHROPIC_MODEL_ID", "claude-3-opus-20240229"))
+        return ChatAnthropic(
+            model=os.environ.get("ANTHROPIC_MODEL_ID", "claude-3-opus-20240229")
+        )
     elif ai_provider == "mistral":
-        return ChatMistralAI(model=os.environ.get("MISTRAL_MODEL_ID", "mistral-large-latest"))
+        return ChatMistralAI(
+            model=os.environ.get("MISTRAL_MODEL_ID", "mistral-large-latest")
+        )
     elif ai_provider == "google":
-        return ChatGoogleGenerativeAI(model=os.environ.get("GOOGLE_MODEL_ID", "gemini-1.5-pro"))
+        return ChatGoogleGenerativeAI(
+            model=os.environ.get("GOOGLE_MODEL_ID", "gemini-1.5-pro")
+        )
     elif ai_provider == "ollama":
         return ChatOllama(model=os.environ.get("OLLAMA_MODEL_ID", "llama3"))
     elif ai_provider == "azure":
         return AzureChatOpenAI(
             azure_deployment=os.environ.get("AZURE_DEPLOYMENT_NAME"),
-            openai_api_version=os.environ.get(
-                "AZURE_API_VERSION", "2023-05-15"),
-            azure_endpoint=os.environ.get("AZURE_ENDPOINT")
+            openai_api_version=os.environ.get("AZURE_API_VERSION", "2023-05-15"),
+            azure_endpoint=os.environ.get("AZURE_ENDPOINT"),
         )
     else:  # default to OpenAI
         base_url = os.environ.get("OPENAI_BASE_URL")
-        kwargs = {"model": os.environ.get(
-            "OPENAI_MODEL_ID", "gpt-4o"), "api_key": os.environ.get("OPENAI_API_KEY"), "base_url": os.environ.get("OPENAI_BASE_URL")}
+        kwargs = {"model": os.environ.get("OPENAI_MODEL_ID", "gpt-4o")}
         if base_url:
             kwargs["base_url"] = base_url
         return ChatOpenAI(**kwargs)
@@ -177,8 +186,7 @@ async def execute_task(task_id: str, instruction: str, ai_provider: str):
         if task_headful is not None:
             headful = task_headful
         else:
-            headful = os.environ.get(
-                "BROWSER_USE_HEADFUL", "false").lower() == "true"
+            headful = os.environ.get("BROWSER_USE_HEADFUL", "false").lower() == "true"
 
         # Get Chrome path and user data directory (task settings override env vars)
         use_custom_chrome = task_browser_config.get("use_custom_chrome")
@@ -208,18 +216,21 @@ async def execute_task(task_id: str, instruction: str, ai_provider: str):
             # For older Chrome versions
             extra_chromium_args += ["--headless=new"]
             logger.info(
-                f"Task {task_id}: Browser config args: {browser_config_args.get('headless')}")
+                f"Task {task_id}: Browser config args: {browser_config_args.get('headless')}"
+            )
             # Add Chrome executable path if provided
             if chrome_path:
                 browser_config_args["chrome_instance_path"] = chrome_path
                 logger.info(
-                    f"Task {task_id}: Using custom Chrome executable: {chrome_path}")
+                    f"Task {task_id}: Using custom Chrome executable: {chrome_path}"
+                )
 
             # Add Chrome user data directory if provided
             if chrome_user_data:
                 extra_chromium_args += [f"--user-data-dir={chrome_user_data}"]
                 logger.info(
-                    f"Task {task_id}: Using Chrome user data directory: {chrome_user_data}")
+                    f"Task {task_id}: Using Chrome user data directory: {chrome_user_data}"
+                )
 
             browser_config = BrowserConfig(**browser_config_args)
             browser_session = BrowserSession(config=browser_config)
@@ -243,7 +254,7 @@ async def execute_task(task_id: str, instruction: str, ai_provider: str):
                 "id": step_id,
                 "step": step_num,
                 "evaluation_previous_goal": step_data.get("evaluation", ""),
-                "next_goal": step_data.get("goal", "")
+                "next_goal": step_data.get("goal", ""),
             }
 
             tasks[task_id]["steps"].append(step)
@@ -276,23 +287,29 @@ async def execute_task(task_id: str, instruction: str, ai_provider: str):
                     # Direct method if available
                     cookies = await agent.browser.get_cookies()
                     tasks[task_id]["browser_data"] = {"cookies": cookies}
-                elif hasattr(agent.browser, "page") and hasattr(agent.browser.page, "cookies"):
+                elif hasattr(agent.browser, "page") and hasattr(
+                    agent.browser.page, "cookies"
+                ):
                     # Try Playwright's page.cookies() method
                     cookies = await agent.browser.page.cookies()
                     tasks[task_id]["browser_data"] = {"cookies": cookies}
-                elif hasattr(agent.browser, "context") and hasattr(agent.browser.context, "cookies"):
+                elif hasattr(agent.browser, "context") and hasattr(
+                    agent.browser.context, "cookies"
+                ):
                     # Try Playwright's context.cookies() method
                     cookies = await agent.browser.context.cookies()
                     tasks[task_id]["browser_data"] = {"cookies": cookies}
                 else:
                     logger.warning(
-                        f"No known method to collect cookies for task {task_id}")
+                        f"No known method to collect cookies for task {task_id}"
+                    )
                     tasks[task_id]["browser_data"] = {
-                        "cookies": [], "error": "No method available to collect cookies"}
+                        "cookies": [],
+                        "error": "No method available to collect cookies",
+                    }
             except Exception as e:
                 logger.error(f"Failed to collect browser data: {str(e)}")
-                tasks[task_id]["browser_data"] = {
-                    "cookies": [], "error": str(e)}
+                tasks[task_id]["browser_data"] = {"cookies": [], "error": str(e)}
 
     except Exception as e:
         logger.exception(f"Error executing task {task_id}")
@@ -307,8 +324,8 @@ async def execute_task(task_id: str, instruction: str, ai_provider: str):
                 await browser.close()
                 logger.info(f"Browser closed successfully for task {task_id}")
             except Exception as e:
-                logger.error(
-                    f"Error closing browser for task {task_id}: {str(e)}")
+                logger.error(f"Error closing browser for task {task_id}: {str(e)}")
+
 
 # API Routes
 
@@ -337,7 +354,7 @@ async def run_task(request: TaskRequest):
         "browser_config": {
             "headful": request.headful,
             "use_custom_chrome": request.use_custom_chrome,
-        }
+        },
     }
 
     # Generate live URL
@@ -345,14 +362,9 @@ async def run_task(request: TaskRequest):
     tasks[task_id]["live_url"] = live_url
 
     # Start task in background
-    asyncio.create_task(execute_task(
-        task_id, request.task, request.ai_provider))
+    asyncio.create_task(execute_task(task_id, request.task, request.ai_provider))
 
-    return TaskResponse(
-        id=task_id,
-        status=TaskStatus.CREATED,
-        live_url=live_url
-    )
+    return TaskResponse(id=task_id, status=TaskStatus.CREATED, live_url=live_url)
 
 
 @app.get("/api/v1/task/{task_id}/status", response_model=TaskStatusResponse)
@@ -364,7 +376,7 @@ async def get_task_status(task_id: str):
     return TaskStatusResponse(
         status=tasks[task_id]["status"],
         result=tasks[task_id].get("output"),
-        error=tasks[task_id].get("error")
+        error=tasks[task_id].get("error"),
     )
 
 
@@ -385,8 +397,14 @@ async def stop_task(task_id: str):
     if task_id not in tasks:
         raise HTTPException(status_code=404, detail="Task not found")
 
-    if tasks[task_id]["status"] in [TaskStatus.FINISHED, TaskStatus.FAILED, TaskStatus.STOPPED]:
-        return {"message": f"Task already in terminal state: {tasks[task_id]['status']}"}
+    if tasks[task_id]["status"] in [
+        TaskStatus.FINISHED,
+        TaskStatus.FAILED,
+        TaskStatus.STOPPED,
+    ]:
+        return {
+            "message": f"Task already in terminal state: {tasks[task_id]['status']}"
+        }
 
     # Get agent
     agent = tasks[task_id].get("agent")
@@ -453,16 +471,11 @@ async def list_tasks():
             "task": task_data.get("task", ""),
             "created_at": task_data.get("created_at", ""),
             "finished_at": task_data.get("finished_at"),
-            "live_url": task_data.get("live_url", f"/live/{task_id}")
+            "live_url": task_data.get("live_url", f"/live/{task_id}"),
         }
         task_list.append(task_summary)
 
-    return {
-        "tasks": task_list,
-        "total": len(task_list),
-        "page": 1,
-        "per_page": 100
-    }
+    return {"tasks": task_list, "total": len(task_list), "page": 1, "per_page": 100}
 
 
 @app.get("/live/{task_id}", response_class=HTMLResponse)
@@ -628,8 +641,9 @@ async def browser_config():
         "chrome_path": chrome_path,
         "chrome_user_data": chrome_user_data,
         "using_custom_chrome": chrome_path is not None,
-        "using_user_data": chrome_user_data is not None
+        "using_user_data": chrome_user_data is not None,
     }
+
 
 # Run server if executed directly
 if __name__ == "__main__":
